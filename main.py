@@ -6,6 +6,7 @@ import http
 import json
 import ssl
 import pathlib
+import requests
 from datetime import datetime, timedelta
 from flask import Flask
 from flask_sockets import Sockets
@@ -106,7 +107,8 @@ def your_print_is_ready(ws: WebSocket):
 
 @sockets.route('/sign')
 def sign(ws: WebSocket):
-    msg = dict(open=True, mentors=["Daiwei L", "Sameer P", "Christina H"], weather='⛅️ 🌡️+73°F 🌬️↑23 mph')
+    res = requests.get('https://wttr.in/Nashville?format=1')
+    msg = dict(open=True, mentors=["Mentor A", "Mentor B", "Mentor C"], weather=res.text)
     ws.send(json.dumps(msg))
 
 
