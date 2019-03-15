@@ -22,7 +22,7 @@ sockets = Sockets(app)
 
 logging.basicConfig(level=logging.INFO, format=LOGGING_FORMAT)
 
-x_api_key = os.environ['X_API_KEY']
+x_api_key: str = os.environ['X_API_KEY']
 
 # Last-value caching of the poller pi response
 last_poller_json: Dict = {}
@@ -64,7 +64,7 @@ def update(ws: WebSocket):
 
 
 def handle_message(ws: WebSocket):
-    global last_poller_json, last_poller_json_str, last_poller_json_time
+    global last_poller_json, last_poller_json_str, last_poller_json_time, clients
     message = ws.receive()
     if message is None:
         return
@@ -103,6 +103,11 @@ def your_print_is_ready(ws: WebSocket):
             ws.close()
     finally:
         clients.remove(ws)
+
+@sockets.route('/sign')
+def sign(ws: WebSocket):
+    msg = dict(open=True, mentors=["Daiwei L", "Sameer P", "Christina H"], weather='⛅️ 🌡️+73°F 🌬️↑23 mph')
+    ws.send(json.dumps(msg))
 
 
 if __name__ == '__main__':
