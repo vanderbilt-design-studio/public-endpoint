@@ -107,7 +107,7 @@ def your_print_is_ready(ws: WebSocket):
 
 @sockets.route('/sign')
 def sign(ws: WebSocket):
-    res = requests.get('https://wttr.in/Nashville?format=1')
+    res = requests.get('https://wttr.in/~Vanderbilt University?format=1')
     msg = dict(open=True, mentors=["Mentor A", "Mentor B", "Mentor C"], weather=res.text)
     ws.send(json.dumps(msg))
 
