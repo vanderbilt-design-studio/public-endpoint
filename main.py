@@ -5,9 +5,11 @@ import logging
 import http
 import json
 import ssl
+import time
 import pathlib
-import requests
 from datetime import datetime, timedelta
+
+import requests
 from flask import Flask
 from flask_sockets import Sockets
 import gevent
@@ -75,14 +77,15 @@ def handle_message(ws: WebSocket):
             clients.remove(ws)
         new_poller_json = message_json
         if new_poller_json != last_poller_json:  # Update if json changed
-            logging.info(f'Poller {ws} sent an update')
+            start = time.time()
             last_poller_json = new_poller_json
             last_poller_json_str = json.dumps(new_poller_json)
             last_poller_json_time = datetime.utcnow()
             update_greenlets = [update(c) for c in clients if is_valid(c)]
             gevent.joinall(update_greenlets,
                            timeout=CLIENT_JOINALL_TIMEOUT_SECONDS)
-        logging.info(f'Poller {ws} update processed')
+            end = time.time()
+            logging.info(f'Poller {ws} update processed in {round((end-start)*1000,2)}ms')
     else:
         logging.info(
             f'Client {ws} sent message, but key not found or incorrect')
