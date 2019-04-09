@@ -4,6 +4,10 @@ from mentors import Shift
 
 
 def is_open(last_poller_json, mentors_on_duty: List[Shift]) -> bool:
+    # JSON doesn't tell us anything about the sign, should never happen though
+    if 'sign' not in last_poller_json:
+        return len(mentors_on_duty) > 0
+
     # Never open when the door is not open
     if last_poller_json['sign']['door'] == 0:
         return False
