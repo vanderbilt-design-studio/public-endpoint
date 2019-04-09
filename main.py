@@ -19,6 +19,7 @@ from geventwebsocket.websocket import WebSocket
 
 from mentors import get_mentors_on_duty
 from sign import is_open
+from weather import get_weather
 
 LOGGING_FORMAT: str = '[%(asctime)s] %(levelname)s: %(message)s'
 CLIENT_JOINALL_TIMEOUT_SECONDS: float = 5.0
@@ -28,7 +29,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(24)
 sockets = Sockets(app)
 
-logging.basicConfig(level=logging.DEBUG, format=LOGGING_FORMAT)
+logging.basicConfig(level=logging.INFO, format=LOGGING_FORMAT)
 
 x_api_key: str = os.environ['X_API_KEY']
 
@@ -80,6 +81,7 @@ def update(ws: WebSocket, ctype: ClientType):
             ws.close()
     return gevent.spawn(send)
 
+
 # Receive messages from poller-pi
 @sockets.route('/')
 def root(ws: WebSocket):
@@ -95,12 +97,12 @@ def root(ws: WebSocket):
                 continue
             msg_json = json.loads(msg)
             if 'key' not in msg_json:
-                logging.warning(f'Poller {ws} did not send a key, killing their connection')
+                logging.warning(f'Potential poller {ws} did not send a key, killing their connection')
                 ws.close()
                 return 
 
             if not secrets.compare_digest(msg_json['key'], x_api_key):
-                logging.warning(f'Poller {ws} sent an incorrect key, killing their connection')
+                logging.warning(f'Potential poller {ws} sent an incorrect key, killing their connection')
                 ws.close()
                 return
 
@@ -113,14 +115,9 @@ def root(ws: WebSocket):
                 last_poller_json = new_poller_json
                 
                 last_poller_json_str_dict[ClientType.PRINTERS] = json.dumps(dict(printers=last_poller_json['printers']))
-                
-                try:
-                    res = requests.get('https://wttr.in/~Vanderbilt University?format=1')
-                    weather = res.text
-                except:
-                    weather = ''
 
                 mentors = get_mentors_on_duty()
+                weather = get_weather()
                 last_poller_json_str_dict[ClientType.SIGN] = json.dumps(dict(open=is_open(last_poller_json, mentors), mentors=mentors, weather=weather))
                 
                 last_poller_json_time = datetime.utcnow()
