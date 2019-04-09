@@ -18,6 +18,7 @@ import gevent
 from geventwebsocket.websocket import WebSocket
 
 from mentors import get_mentors_on_duty
+from sign import is_open
 
 LOGGING_FORMAT: str = '[%(asctime)s] %(levelname)s: %(message)s'
 CLIENT_JOINALL_TIMEOUT_SECONDS: float = 5.0
@@ -120,7 +121,7 @@ def root(ws: WebSocket):
                     weather = ''
 
                 mentors = get_mentors_on_duty()
-                last_poller_json_str_dict[ClientType.SIGN] = json.dumps(dict(open=len(mentors) > 0, mentors=mentors, weather=weather))
+                last_poller_json_str_dict[ClientType.SIGN] = json.dumps(dict(open=is_open(last_poller_json, mentors), mentors=mentors, weather=weather))
                 
                 last_poller_json_time = datetime.utcnow()
                 
