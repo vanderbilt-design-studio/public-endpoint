@@ -11,10 +11,15 @@ Shift = namedtuple('Shift', ['name', 'day_of_week', 'start', 'duration'])
 
 SHIFTS_CSV_EXPORT_URL = os.environ['SHIFTS_CSV_EXPORT_URL']
 
+mentors: List[Shift] = None
+mentors_last_update: datetime.datetime = None
 def get_shifts() -> List[Shift]:
-    res = requests.get(url=SHIFTS_CSV_EXPORT_URL)
-    reader = csv.reader(res.content.decode('utf-8').splitlines())
-    mentors = [Shift(*row[:4]) for row in reader if row[0] != '']
+    global mentors, mentors_last_update
+    if mentors is None or (datetime.datetime.now() - mentors_last_update) > datetime.timedelta(minutes=15):
+        res = requests.get(url=SHIFTS_CSV_EXPORT_URL)
+        reader = csv.reader(res.content.decode('utf-8').splitlines())
+        mentors = [Shift(*row[:4]) for row in reader if row[0] != '']
+        mentors_last_update = datetime.datetime.now()
 
     return mentors
 
