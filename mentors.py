@@ -25,13 +25,13 @@ def get_shifts() -> List[Shift]:
 
 
 def get_mentors_on_duty() -> List[Shift]:
-    now: datetime.datetime = datetime.datetime.now()
+    now: datetime.datetime = datetime.datetime.now(tz=datetime.timezone(datetime.timedelta(hours=-5)))
     current_day_of_week = now.strftime('%A')
 
     def is_mentor_on_duty(shift: Shift) -> bool:
         if shift.day_of_week != current_day_of_week:
             return False
-        start = datetime.datetime.combine(now.date(), datetime.datetime.strptime(shift.start, '%I:%M:%S %p').time())
+        start = datetime.datetime.combine(now.date(), datetime.datetime.strptime(shift.start, '%I:%M:%S %p').time(), tzinfo=now.tzinfo)
         # Adapted from https://stackoverflow.com/a/12352624 and only works for durations < 24hrs
         duration = datetime.datetime.strptime(shift.duration, '%H:%M:%S')
         duration = datetime.timedelta(hours=duration.hour, minutes=duration.minute, seconds=duration.second)
