@@ -112,7 +112,7 @@ def root(ws: WebSocket):
                 
                 last_poller_json = new_poller_json
                 
-                last_poller_json_str_dict[ClientType.PRINTERS] = json.dumps(dict(printers=last_poller_json['printers'].copy()))
+                last_poller_json_str_dict[ClientType.PRINTERS] = json.dumps(dict(printers=last_poller_json['printers']))
                 
                 try:
                     res = requests.get('https://wttr.in/~Vanderbilt University?format=1')
