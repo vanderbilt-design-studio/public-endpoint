@@ -18,7 +18,7 @@ import gevent
 from geventwebsocket.websocket import WebSocket
 
 from mentors import get_mentors_on_duty
-from sign import is_open
+from sign import is_open, OpenType
 from weather import get_weather
 
 LOGGING_FORMAT: str = '[%(asctime)s] %(levelname)s: %(message)s'
@@ -35,13 +35,12 @@ x_api_key: str = os.environ['X_API_KEY']
 
 
 class ClientType(Enum):
-    POLLER = auto()
-    PRINTERS = auto()
-    SIGN = auto()
+    POLLER = 'poller'
+    PRINTERS = 'printers'
+    SIGN = 'sign'
 
 
-# Last-value caching of the poller pi response
-last_poller_json: Dict = {}
+# Last-value caching of the poller pi computed update
 last_poller_json_str_dict: Dict[ClientType, str] = {}
 last_poller_json_time: datetime = None
 
@@ -85,7 +84,7 @@ def update(ws: WebSocket, ctype: ClientType):
 # Receive messages from poller-pi
 @sockets.route('/')
 def root(ws: WebSocket):
-    global last_poller_json, last_poller_json_str_dict, last_poller_json_time, clients_dict
+    global last_poller_json_str_dict, last_poller_json_time, clients_dict
     try:
         logging.info(f'Potential poller {ws} connected')
         keep_alive(ws, ClientType.POLLER)
@@ -108,29 +107,29 @@ def root(ws: WebSocket):
 
             logging.debug(f'Poller {ws} authenticated')
             new_poller_json = msg_json
-            if new_poller_json != last_poller_json:  # Update all clients if json changed
-                logging.debug(f'Poller {ws} message is differs from last received')
-                start = time.time()
-                
-                last_poller_json = new_poller_json
-                
-                last_poller_json_str_dict[ClientType.PRINTERS] = json.dumps(dict(printers=last_poller_json['printers']))
 
-                mentors = get_mentors_on_duty()
-                weather = get_weather()
-                last_poller_json_str_dict[ClientType.SIGN] = json.dumps(dict(open=is_open(last_poller_json, mentors), mentors=mentors, weather=weather))
-                
-                last_poller_json_time = datetime.utcnow()
-                
+            last_poller_json_time = datetime.utcnow()
 
-                update_greenlets = []
-                for ctype in clients_dict:
-                    for c in clients_dict[ctype]:
-                        if is_valid(c):
-                            update_greenlets.append(update(c, ctype))
-                gevent.joinall(update_greenlets, timeout=CLIENT_JOINALL_TIMEOUT_SECONDS)
-                end = time.time()
-                logging.info(f'Poller {ws} update processed in {round((end-start)*1000,2)}ms')
+            mentors = get_mentors_on_duty()
+            opn = is_open(new_poller_json, mentors)
+            if opn is not OpenType.OPEN:
+                mentors = []
+            weather = get_weather()
+
+            new_poller_json_str_dict = {}
+            new_poller_json_str_dict[ClientType.PRINTERS] = json.dumps(dict(printers=new_poller_json['printers']))
+            new_poller_json_str_dict[ClientType.SIGN] = json.dumps(dict(open=(opn == OpenType.FORCE_OPEN or opn == OpenType.OPEN), mentors=mentors, weather=weather))
+
+            for ctype in new_poller_json_str_dict:
+                if ctype not in last_poller_json_str_dict or new_poller_json_str_dict[ctype] != last_poller_json_str_dict[ctype]:  # Update all clients if json changed
+                    logging.debug(f'Poller {ws} computed update is different for {ctype} clients')
+
+                    start = time.time()
+                    last_poller_json_str_dict[ctype] = new_poller_json_str_dict[ctype]
+                    update_greenlets = [update(c, ctype) for c in clients_dict[ctype] if is_valid(c)]
+                    gevent.joinall(update_greenlets, timeout=CLIENT_JOINALL_TIMEOUT_SECONDS)
+                    end = time.time()
+                    logging.info(f'Poller {ws} computed update processed for {ctype} clients in {round((end-start)*1000,2)}ms')
         logging.info(f'Poller {ws} left')
     except Exception as err:
         logging.exception(err)
