@@ -1,6 +1,6 @@
 from typing import List
 
-from mentors import Shift
+from mentors import Shift, get_mentors_on_duty
 
 
 def is_open(last_poller_json, mentors_on_duty: List[Shift]) -> bool:
@@ -9,7 +9,7 @@ def is_open(last_poller_json, mentors_on_duty: List[Shift]) -> bool:
         return len(mentors_on_duty) > 0
 
     # Never open when the door is not open
-    if last_poller_json['sign']['door'] == 0:
+    if last_poller_json['sign']['door'] == 1:
         return False
 
     # Normal opne (follow shift schedule)
@@ -22,3 +22,4 @@ def is_open(last_poller_json, mentors_on_duty: List[Shift]) -> bool:
 
     # Force closed
     return False
+print(is_open({}, get_mentors_on_duty()))
