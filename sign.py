@@ -17,7 +17,7 @@ def is_open(last_poller_json, mentors_on_duty: List[Shift]) -> OpenType:
 
     # Never open when the door is not open
     if last_poller_json['sign']['door'] == 1:
-        return OpenType.FORCE_OPEN
+        return OpenType.CLOSED
 
     # Normal open (follow shift schedule)
     if last_poller_json['sign']['switch']['one_on'] == 1:
