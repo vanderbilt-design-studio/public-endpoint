@@ -28,7 +28,7 @@ requests==2.21.0
 rope==0.14.0
 six==1.12.0
 typed-ast==1.3.1
-urllib3==1.24.1
+urllib3==1.24.2
 uuid==1.30
 websockets==7.0
 Werkzeug==0.15.2
