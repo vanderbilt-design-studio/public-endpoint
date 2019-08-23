@@ -130,7 +130,7 @@ def root(ws: WebSocket):
                     gevent.joinall(update_greenlets, timeout=CLIENT_JOINALL_TIMEOUT_SECONDS)
                     end = time.time()
                     logging.info(f'Poller {ws} update for {ctype} clients processed in {round((end-start)*1000,2)}ms')
-                else
+                else:
                     logging.debug(f'Poller {ws} update for {ctype} clients was the same')
         logging.info(f'Poller {ws} left')
     except Exception as err:
