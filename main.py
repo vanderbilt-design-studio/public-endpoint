@@ -122,14 +122,16 @@ def root(ws: WebSocket):
 
             for ctype in new_poller_json_str_dict:
                 if ctype not in last_poller_json_str_dict or new_poller_json_str_dict[ctype] != last_poller_json_str_dict[ctype]:  # Update all clients if json changed
-                    logging.debug(f'Poller {ws} computed update is different for {ctype} clients')
+                    logging.debug(f'Poller {ws} update diff for {ctype} clients is not empty')
 
                     start = time.time()
                     last_poller_json_str_dict[ctype] = new_poller_json_str_dict[ctype]
                     update_greenlets = [update(c, ctype) for c in clients_dict[ctype] if is_valid(c)]
                     gevent.joinall(update_greenlets, timeout=CLIENT_JOINALL_TIMEOUT_SECONDS)
                     end = time.time()
-                    logging.info(f'Poller {ws} computed update processed for {ctype} clients in {round((end-start)*1000,2)}ms')
+                    logging.info(f'Poller {ws} update for {ctype} clients processed in {round((end-start)*1000,2)}ms')
+                else
+                    logging.debug(f'Poller {ws} update for {ctype} clients was the same')
         logging.info(f'Poller {ws} left')
     except Exception as err:
         logging.exception(err)
