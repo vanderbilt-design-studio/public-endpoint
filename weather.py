@@ -9,7 +9,10 @@ def get_weather() -> str:
     if weather is None or (datetime.datetime.now() - weather_last) > datetime.timedelta(seconds=60):
         try:
             res = requests.get('https://wttr.in/~Vanderbilt University?format=1')
-            weather = res.text
+            if res.status_code == requests.codes.ok:
+                weather = res.text
+            else:
+                weather = ''
         except:
             weather = ''
         finally:
