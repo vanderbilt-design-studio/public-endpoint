@@ -39,3 +39,6 @@ def get_mentors_on_duty() -> List[Shift]:
         return shift.day_of_week == current_day_of_week and now >= start and now < end
 
     return list(map(lambda mentor: mentor.name, filter(is_mentor_on_duty, get_shifts())))
+
+if __name__ == '__main__':
+    print(get_shifts())
