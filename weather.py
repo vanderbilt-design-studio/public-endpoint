@@ -18,3 +18,6 @@ def get_weather() -> str:
         finally:
             weather_last = datetime.datetime.now()
     return weather
+
+if __name__ == '__main__':
+    print(f'The weather is {get_weather()}')
