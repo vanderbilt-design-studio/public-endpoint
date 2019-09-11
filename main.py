@@ -24,6 +24,7 @@ from weather import get_weather
 LOGGING_FORMAT: str = '[%(asctime)s] %(levelname)s: %(message)s'
 CLIENT_JOINALL_TIMEOUT_SECONDS: float = 5.0
 CLIENT_KEEPALIVE_SECONDS: float = 50.0
+POLLER_JSON_TIMEOUT_SECONDS: float = 30.0
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(24)
@@ -54,7 +55,7 @@ def is_valid(ws: WebSocket) -> bool:
 
 
 def poller_json_to_str(ctype: ClientType) -> str:
-    if last_poller_json_time is None or datetime.utcnow() - last_poller_json_time > timedelta(seconds=30):
+    if last_poller_json_time is None or datetime.utcnow() - last_poller_json_time > timedelta(seconds=POLLER_JSON_TIMEOUT_SECONDS):
         # Send nothing if no previous json or last update is stale
         return '{}'
     return last_poller_json_str_dict[ctype] if ctype in last_poller_json_str_dict else '{}'
