@@ -14,7 +14,7 @@ def get_weather() -> str:
             if len(res) > 0 and 'record' in res[0] and 'readings' in res[0]['record']:
                 for reading in res[0]['record']['readings']:
                     if 'sensor_type' in reading and 'value' in reading and reading['sensor_type'] == 'Thermometer':
-                        weather = '{} F'.format(reading['value'])
+                        weather = '{} °F'.format(reading['value'])
         except:
             weather = ''
         finally:
