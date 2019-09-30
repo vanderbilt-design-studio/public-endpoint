@@ -120,7 +120,7 @@ def root(ws: WebSocket):
             new_poller_json_str_dict = {}
             new_poller_json_str_dict[ClientType.PRINTERS] = json.dumps(dict(printers=new_poller_json['printers']))
             new_poller_json_str_dict[ClientType.SIGN] = json.dumps(dict(open=(opn == OpenType.FORCE_OPEN or opn == OpenType.OPEN), mentors=mentors, weather=get_weather()))
-            new_poller_json_str_dict[ClientType.HOURS] = json.dumps(get_hours())
+            new_poller_json_str_dict[ClientType.HOURS] = json.dumps(list(map(lambda day: day._asdict(), get_hours())))
 
             for ctype in new_poller_json_str_dict:
                 if ctype not in last_poller_json_str_dict or new_poller_json_str_dict[ctype] != last_poller_json_str_dict[ctype]:  # Update all clients if json changed
