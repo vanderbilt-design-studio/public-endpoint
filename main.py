@@ -17,7 +17,7 @@ from flask_sockets import Sockets
 import gevent
 from geventwebsocket.websocket import WebSocket
 
-from mentors import get_mentors_on_duty
+from mentors import get_mentors_on_duty, get_hours
 from sign import is_open, OpenType
 from weather import get_weather
 
@@ -39,6 +39,7 @@ class ClientType(Enum):
     POLLER = 'poller'
     PRINTERS = 'printers'
     SIGN = 'sign'
+    HOURS = 'hours'
 
 
 # Last-value caching of the poller pi computed update
@@ -115,11 +116,11 @@ def root(ws: WebSocket):
             opn = is_open(new_poller_json, mentors)
             if opn is not OpenType.OPEN:
                 mentors = []
-            weather = get_weather()
 
             new_poller_json_str_dict = {}
             new_poller_json_str_dict[ClientType.PRINTERS] = json.dumps(dict(printers=new_poller_json['printers']))
-            new_poller_json_str_dict[ClientType.SIGN] = json.dumps(dict(open=(opn == OpenType.FORCE_OPEN or opn == OpenType.OPEN), mentors=mentors, weather=weather))
+            new_poller_json_str_dict[ClientType.SIGN] = json.dumps(dict(open=(opn == OpenType.FORCE_OPEN or opn == OpenType.OPEN), mentors=mentors, weather=get_weather()))
+            new_poller_json_str_dict[ClientType.HOURS] = json.dumps(get_hours())
 
             for ctype in new_poller_json_str_dict:
                 if ctype not in last_poller_json_str_dict or new_poller_json_str_dict[ctype] != last_poller_json_str_dict[ctype]:  # Update all clients if json changed
@@ -177,6 +178,24 @@ def sign(ws: WebSocket):
             ws.close()
     finally:
         clients_dict[ClientType.SIGN].remove(ws)
+
+@sockets.route('/hours')
+def hours(ws: WebSocket):
+    global clients_dict
+    clients_dict[ClientType.HOURS].append(ws)
+    logging.info(f'Hours client {ws} joined')
+    try:
+        keep_alive(ws, ClientType.HOURS)
+        while is_valid(ws):
+            gevent.sleep(.1)
+            ws.receive()
+        logging.info(f'Hours client {ws} left')
+    except:
+        logging.error(f'Hours client{ws} forced to leave due to an error')
+        if is_valid(ws):
+            ws.close()
+    finally:
+        clients_dict[ClientType.HOURS].remove(ws)
 
 
 if __name__ == '__main__':
