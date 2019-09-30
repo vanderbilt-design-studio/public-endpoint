@@ -15,7 +15,8 @@ SHIFTS_CSV_EXPORT_URL = os.environ['SHIFTS_CSV_EXPORT_URL']
 CST: datetime.timezone = datetime.timezone(datetime.timedelta(hours=-5))
 TIME_OF_DAY_FORMAT: str = '%I:%M:%S %p'
 DURATION_FORMAT: str = '%H:%M:%S'
-HOURS_FORMAT: str = '%I:%M %p'
+# Linux-only space-padding from POSIX standard https://stackoverflow.com/questions/10807164/python-time-formatting-different-in-windows
+HOURS_FORMAT: str = '%_I:%M %p'
 
 mentors: List[Shift] = None
 mentors_last_update: datetime.datetime = None
