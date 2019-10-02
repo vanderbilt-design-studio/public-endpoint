@@ -18,7 +18,13 @@ def get_weather() -> str:
             if len(res) > 0 and 'record' in res[0] and 'readings' in res[0]['record']:
                 for reading in res[0]['record']['readings']:
                     if 'sensor_type' in reading and reading['sensor_type'] == 'Thermometer' and 'value' in reading:
-                        weather = '{} °F'.format(float(reading['value']))
+                        temperature = float(reading['value'])
+                        weather = '{} °F'.format(temperature)
+                        # Unreasonably weird temperatures
+                        # https://en.wikipedia.org/wiki/Lowest_temperature_recorded_on_Earth
+                        # https://en.wikipedia.org/wiki/Highest_temperature_recorded_on_Earth (ground temperature)
+                        if temperature > 201.0 or temperature < -128.6:
+                            weather = ''
         except (requests.RequestException, ValueError) as e:
             logging.error(f'Exception while getting weather: {e}')
             weather = ''
