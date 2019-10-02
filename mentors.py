@@ -163,7 +163,6 @@ def parse_start_str(start_str: str, day_of_week: str) -> datetime.datetime:
 def parse_duration_str(duration_str: str) -> datetime.timedelta:
     """
     Parses durations using a regex
-    Adapted from https://stackoverflow.com/a/12352624 and only works for durations < 24hrs
     duration_str = '2:00:00' -> datetime.timedelta(hours=2)
     """
     groups: Dict[str, str] = DURATION_REGEX.match(duration_str).groupdict()
