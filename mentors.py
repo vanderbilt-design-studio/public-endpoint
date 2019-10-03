@@ -39,9 +39,15 @@ Day = namedtuple('Day', ['day_of_week', 'hours'])
 # Linux-only space-padding from POSIX standard https://stackoverflow.com/questions/10807164/python-time-formatting-different-in-windows
 TIME_RANGE_FORMAT: str = '%_I:%M %p'
 class TimeRange(namedtuple('Hours', ['start', 'duration'])):
+    def format_time_of_day(self, dt: datetime.datetime) -> str:
+        # Specialize for on-the-hour cases
+        if dt.minute == 0:
+            return dt.strftime('%_I %p')
+        return dt.strftime(TIME_RANGE_FORMAT)
+
     def __str__(self):
         """String representation of a time-range as '2:00 PM - 4:00 PM'"""
-        return f'{self.start.strftime(TIME_RANGE_FORMAT)} – {(self.start + self.duration).strftime(TIME_RANGE_FORMAT)}'
+        return f'{self.format_time_of_day(self.start)} – {self.format_time_of_day(self.start + self.duration)}'
 
     def __lt__(self, other: 'Hours') -> bool:
         """Used for sorting, datetime-first"""
