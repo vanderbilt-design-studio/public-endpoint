@@ -22,7 +22,7 @@ class Sheet():
         swipe_card_codes_column: uppercase alphabetic column name
         prefix: string to prepend to column names being written to. i.e. if there is a First_Name field in the report, the update will only update a column named prefix + First_Name
         '''
-        self.service = discovery.build('sheets', 'v4', credentials=credentials)
+        self.service = discovery.build('sheets', 'v4', credentials=credentials, cache_discovery=False)
         self.spreadsheet_id = next(re.finditer(SPEARDSHEET_ID_REGEX, spreadsheet_url), None).group(1)
         self.sheet_id = next(re.finditer(SHEET_ID_REGEX, spreadsheet_url), None).group(1)
         self.swipe_card_codes_column = swipe_card_codes_column
