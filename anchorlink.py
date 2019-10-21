@@ -162,6 +162,7 @@ class Attendance():
         report = list(map(lambda line: ReportLine(*line), reader))
         for line in report:
             self.previously_uploaded.add(line.Card_ID_Number)
+        self.last_download = report
         return report
 
 
