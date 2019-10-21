@@ -62,7 +62,6 @@ class Sheet():
             if column_name.replace(self.prefix, '', 1) not in ReportLine._fields:
                 continue
             google_form_filtered_column_names.append((column_number_to_id(i + 1), column_name))
-        print(google_form_filtered_column_names)
         if len(google_form_filtered_column_names) == 0:
             return
 
@@ -70,7 +69,6 @@ class Sheet():
         report: List[ReportLine] = attendance.download()
         code_to_report: Dict[str, ReportLine] = {line.Card_ID_Number: line for line in report}
         report_rows = [code_to_report[code] if code in code_to_report else None for code in swipe_card_codes]
-
         data = []
         for column_id, column_name in google_form_filtered_column_names:
             data.append({

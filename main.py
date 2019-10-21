@@ -27,7 +27,7 @@ LOGGING_FORMAT: str = '[%(asctime)s] %(levelname)s: %(message)s'
 CLIENT_JOINALL_TIMEOUT_SECONDS: float = 5.0
 CLIENT_KEEPALIVE_SECONDS: float = 50.0
 POLLER_JSON_TIMEOUT_SECONDS: float = 30.0
-SHEET_UPDATE_PERIOD: float = 15.0
+SHEET_UPDATE_PERIOD: float = 30.0
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(24)
@@ -35,7 +35,7 @@ sockets = Sockets(app)
 
 logging.basicConfig(level=logging.INFO, format=LOGGING_FORMAT)
 
-X_API_KEY: str = os.environ['X_API_KEY']
+X_API_KEY: str = os.environ.get('X_API_KEY', '')
 
 
 class ClientType(Enum):
@@ -62,7 +62,7 @@ def sheet_update_loop():
     attendance = Attendance(Credentials(VANDERBILT_USERNAME, VANDERBILT_PASSWORD), Event(ANCHORLINK_ORGANIZATION, ANCHORLINK_EVENT_ID))
     print_log_sheet_printee = Sheet(service_account.Credentials.from_service_account_info(GOOGLE_SERVICE_ACCOUNT_CREDENTIALS), PRINT_LOG_SHEETS_URL, 'B', 'Printee_')
     print_log_sheet_mentor = Sheet(service_account.Credentials.from_service_account_info(GOOGLE_SERVICE_ACCOUNT_CREDENTIALS), PRINT_LOG_SHEETS_URL, 'F', 'Mentor_')
-    mentor_sign_in_sheet = Sheet(service_account.Credentials.from_service_account_info(GOOGLE_SERVICE_ACCOUNT_CREDENTIALS), MENTOR_SIGN_IN_SHEETS_URL, 'B')
+    mentor_sign_in_sheet = Sheet(service_account.Credentials.from_service_account_info(GOOGLE_SERVICE_ACCOUNT_CREDENTIALS), MENTOR_SIGN_IN_SHEETS_URL, 'C')
 
     # First download to cache all known card id codes
     attendance.download()

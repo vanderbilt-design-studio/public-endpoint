@@ -12,7 +12,7 @@ import requests
 
 Shift = namedtuple('Shift', ['name', 'day_of_week', 'start', 'duration'])
 
-SHIFTS_CSV_EXPORT_URL = os.environ['SHIFTS_CSV_EXPORT_URL']
+SHIFTS_CSV_EXPORT_URL = os.environ.get('SHIFTS_CSV_EXPORT_URL', '')
 
 CST: datetime.timezone = datetime.timezone(datetime.timedelta(hours=-5))
 TIME_OF_DAY_FORMAT: str = '%I:%M:%S %p'

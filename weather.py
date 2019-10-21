@@ -3,7 +3,7 @@ import requests
 import os
 import logging
 
-WEATHERSTEM_API_KEY = os.environ['WEATHERSTEM_API_KEY']
+WEATHERSTEM_API_KEY = os.environ.get('WEATHERSTEM_API_KEY','')
 
 weather: str = None
 weather_last: datetime.datetime = None
