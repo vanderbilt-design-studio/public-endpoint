@@ -6,7 +6,6 @@ import http
 import json
 import ssl
 import time
-import pathlib
 from datetime import datetime, timedelta
 from enum import Enum, auto
 from collections import defaultdict
@@ -16,15 +15,19 @@ from flask import Flask
 from flask_sockets import Sockets
 import gevent
 from geventwebsocket.websocket import WebSocket
+from google.oauth2 import service_account
 
 from mentors import get_mentors_on_duty, get_hours
 from sign import is_open, OpenType
 from weather import get_weather
+from anchorlink import Attendance, Credentials, Event
+from sheets import Sheet
 
 LOGGING_FORMAT: str = '[%(asctime)s] %(levelname)s: %(message)s'
 CLIENT_JOINALL_TIMEOUT_SECONDS: float = 5.0
 CLIENT_KEEPALIVE_SECONDS: float = 50.0
 POLLER_JSON_TIMEOUT_SECONDS: float = 30.0
+SHEET_UPDATE_PERIOD: float = 15.0
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(24)
@@ -32,7 +35,7 @@ sockets = Sockets(app)
 
 logging.basicConfig(level=logging.INFO, format=LOGGING_FORMAT)
 
-x_api_key: str = os.environ['X_API_KEY']
+X_API_KEY: str = os.environ['X_API_KEY']
 
 
 class ClientType(Enum):
@@ -45,13 +48,32 @@ class ClientType(Enum):
 # Last-value caching of the poller pi computed update
 last_poller_json_str_dict: Dict[ClientType, str] = {}
 last_poller_json_time: datetime = None
-
-
 clients_dict: Dict[ClientType, List[WebSocket]] = defaultdict(list)
 
 
+def sheet_update_loop():
+    VANDERBILT_USERNAME: str = os.environ['VANDERBILT_USERNAME']
+    VANDERBILT_PASSWORD: str = os.environ['VANDERBILT_PASSWORD']
+    ANCHORLINK_ORGANIZATION: str = os.environ['ANCHORLINK_ORGANIZATION']
+    ANCHORLINK_EVENT_ID: str = os.environ['ANCHORLINK_EVENT_ID']
+    PRINT_LOG_SHEETS_URL: str = os.environ['PRINT_LOG_SHEETS_URL']
+    MENTOR_SIGN_IN_SHEETS_URL: str = os.environ['MENTOR_SIGN_IN_SHEETS_URL']
+    GOOGLE_SERVICE_ACCOUNT_CREDENTIALS: Dict[str, str] = json.loads(os.environ['GOOGLE_SERVICE_ACCOUNT_CREDENTIALS_JSON'])
+    attendance = Attendance(Credentials(VANDERBILT_USERNAME, VANDERBILT_PASSWORD), Event(ANCHORLINK_ORGANIZATION, ANCHORLINK_EVENT_ID))
+    print_log_sheet_printee = Sheet(service_account.Credentials.from_service_account_info(GOOGLE_SERVICE_ACCOUNT_CREDENTIALS), PRINT_LOG_SHEETS_URL, 'B', 'Printee_')
+    print_log_sheet_mentor = Sheet(service_account.Credentials.from_service_account_info(GOOGLE_SERVICE_ACCOUNT_CREDENTIALS), PRINT_LOG_SHEETS_URL, 'F', 'Mentor_')
+    mentor_sign_in_sheet = Sheet(service_account.Credentials.from_service_account_info(GOOGLE_SERVICE_ACCOUNT_CREDENTIALS), MENTOR_SIGN_IN_SHEETS_URL, 'B')
+
+    # First download to cache all known card id codes
+    attendance.download()
+    while True:
+        print_log_sheet_printee.update(attendance)
+        print_log_sheet_mentor.update(attendance)
+        mentor_sign_in_sheet.update(attendance)
+        gevent.sleep(SHEET_UPDATE_PERIOD)
+
 def is_valid(ws: WebSocket) -> bool:
-    # Just a sanity check, sometimes sockets will disappear before we can realize they are gone
+    '''Just a sanity check, sometimes sockets will disappear before we can realize they are gone'''
     return ws is not None and not ws.closed
 
 
@@ -62,16 +84,18 @@ def poller_json_to_str(ctype: ClientType) -> str:
     return last_poller_json_str_dict[ctype] if ctype in last_poller_json_str_dict else '{}'
 
 
-# This prevents Heroku from closing WebSockets.
-# Heroku's timeout is at 55 seconds, so this should be safe
-# enough to prevent connection killing.
-# https://devcenter.heroku.com/articles/websockets#timeouts
 def keep_alive(ws: WebSocket, ctype: ClientType):
+    '''
+    This prevents Heroku from closing WebSockets.
+    Heroku's timeout is at 55 seconds, so this should be safe
+    enough to prevent connection killing.
+    https://devcenter.heroku.com/articles/websockets#timeouts
+    '''
     def send():
-        if is_valid(ws):
+        while is_valid(ws):
+            gevent.sleep(CLIENT_KEEPALIVE_SECONDS)
             ws.send(poller_json_to_str(ctype))
-            gevent.spawn_later(CLIENT_KEEPALIVE_SECONDS, send)
-    send()
+    gevent.spawn(send)
 
 
 def update(ws: WebSocket, ctype: ClientType):
@@ -83,9 +107,9 @@ def update(ws: WebSocket, ctype: ClientType):
     return gevent.spawn(send)
 
 
-# Receive messages from poller-pi
 @sockets.route('/')
 def root(ws: WebSocket):
+    '''Receive messages from poller-pi'''
     global last_poller_json_str_dict, last_poller_json_time, clients_dict
     try:
         logging.info(f'Potential poller {ws} connected')
@@ -100,9 +124,9 @@ def root(ws: WebSocket):
             if 'key' not in msg_json:
                 logging.warning(f'Potential poller {ws} did not send a key, killing their connection')
                 ws.close()
-                return 
+                return
 
-            if not secrets.compare_digest(msg_json['key'], x_api_key):
+            if not secrets.compare_digest(msg_json['key'], X_API_KEY):
                 logging.warning(f'Potential poller {ws} sent an incorrect key, killing their connection')
                 ws.close()
                 return
@@ -141,9 +165,9 @@ def root(ws: WebSocket):
             ws.close()
 
 
-# Send messages to printer clients
 @sockets.route('/printers')
 def printers(ws: WebSocket):
+    '''Send messages to printer clients'''
     global clients_dict
     clients_dict[ClientType.PRINTERS].append(ws)
     logging.info(f'Printer client {ws} joined')
@@ -160,9 +184,10 @@ def printers(ws: WebSocket):
     finally:
         clients_dict[ClientType.PRINTERS].remove(ws)
 
-# Send messages to sign clients
+
 @sockets.route('/sign')
 def sign(ws: WebSocket):
+    '''Send messages to sign clients'''
     global clients_dict
     clients_dict[ClientType.SIGN].append(ws)
     logging.info(f'Sign client {ws} joined')
@@ -181,6 +206,7 @@ def sign(ws: WebSocket):
 
 @sockets.route('/hours')
 def hours(ws: WebSocket):
+    '''Send messages to hours clients'''
     global clients_dict
     clients_dict[ClientType.HOURS].append(ws)
     logging.info(f'Hours client {ws} joined')
@@ -201,5 +227,6 @@ def hours(ws: WebSocket):
 if __name__ == '__main__':
     from gevent import pywsgi
     from geventwebsocket.handler import WebSocketHandler
+    gevent.spawn(sheet_update_loop)
     server = pywsgi.WSGIServer(('', 5000), app, handler_class=WebSocketHandler)
     server.serve_forever()
