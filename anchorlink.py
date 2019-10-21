@@ -52,6 +52,7 @@ class Attendance():
         self.driver = driver
         self.logged_in = False
         self.previously_uploaded = set()
+        self.last_download = None
         if self.driver is None:
             # Headless mode
             opts = webdriver.ChromeOptions()
@@ -125,11 +126,15 @@ class Attendance():
             warnings.warn("Could not find swipe success or failure element, assuming success", RuntimeWarning)
             return True
 
+        # Invalidate last download
+        self.last_download = None
         return list(map(submit_card, swiped_card_codes))
 
 
     def download(self) -> List[ReportLine]:
         """Exports and downloads attendance report. Caches card codes to avoid duplicate uploads."""
+        if self.last_download is not None:
+            return self.last_download
         self.login()
 
         # Export attendance

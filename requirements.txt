@@ -1,4 +1,4 @@
-astroid==2.3.1
+astroid==2.3.2
 asyncio==3.4.3
 autopep8==1.4.4
 cachetools==3.1.1
@@ -19,7 +19,7 @@ gunicorn==19.9.0
 httplib2==0.14.0
 idna==2.8
 ifaddr==0.1.6
-ipaddress==1.0.22
+ipaddress==1.0.23
 isort==4.3.21
 itsdangerous==1.1.0
 Jinja2==2.10.3
@@ -31,7 +31,7 @@ oauthlib==3.1.0
 pyasn1==0.4.7
 pyasn1-modules==0.2.7
 pycodestyle==2.5.0
-pylint==2.4.2
+pylint==2.4.3
 python-engineio==3.9.3
 python-socketio==4.3.1
 requests==2.22.0

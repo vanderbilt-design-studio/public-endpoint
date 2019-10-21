@@ -71,6 +71,7 @@ def sheet_update_loop():
         print_log_sheet_mentor.update(attendance)
         mentor_sign_in_sheet.update(attendance)
         gevent.sleep(SHEET_UPDATE_PERIOD)
+gevent.spawn(sheet_update_loop)
 
 def is_valid(ws: WebSocket) -> bool:
     '''Just a sanity check, sometimes sockets will disappear before we can realize they are gone'''
@@ -227,6 +228,5 @@ def hours(ws: WebSocket):
 if __name__ == '__main__':
     from gevent import pywsgi
     from geventwebsocket.handler import WebSocketHandler
-    gevent.spawn(sheet_update_loop)
     server = pywsgi.WSGIServer(('', 5000), app, handler_class=WebSocketHandler)
     server.serve_forever()
