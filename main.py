@@ -93,8 +93,8 @@ def keep_alive(ws: WebSocket, ctype: ClientType):
     '''
     def send():
         while is_valid(ws):
-            gevent.sleep(CLIENT_KEEPALIVE_SECONDS)
             ws.send(poller_json_to_str(ctype))
+            gevent.sleep(CLIENT_KEEPALIVE_SECONDS)
     gevent.spawn(send)
 
 
