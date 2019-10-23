@@ -60,7 +60,6 @@ class Attendance():
                 opts.add_argument('--headless')
                 opts.add_argument('--disable-gpu')
                 opts.add_argument('--no-sandbox')
-                opts.add_argument('--window-size=640,480')
             self.driver = webdriver.Chrome(options=opts)
             # No implicit waiting -- all waits must be EXPLICIT
             self.driver.implicitly_wait(0)
@@ -195,6 +194,6 @@ class Attendance():
 
 
 if __name__ == '__main__':
-    attendance = Attendance(Credentials('puris', os.environ['PASS']), Event('designstudio', '5048888'), debug=True)
+    attendance = Attendance(Credentials('puris', os.environ['VANDERBILT_PASSWORD']), Event('designstudio', '5048888'), debug=True)
     print(attendance.upload(['796000210', '796000210', '796000210']))
     print(attendance.download())
