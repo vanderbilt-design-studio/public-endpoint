@@ -1,6 +1,7 @@
 import os
 import re
 from typing import List, Dict
+import json
 
 from anchorlink import Attendance, ReportLine, Credentials, Event
 from googleapiclient import discovery
@@ -29,6 +30,7 @@ class Sheet():
         assert self.swipe_card_codes_column.isalpha()
         assert self.swipe_card_codes_column.isupper()
         self.prefix = prefix
+        self.last_batch_json = None
 
     # TODO: use a GDrive webhook. It's really messy right now and docs are unclear so I'll pass for now.
     # def register_webhook(self, address: str, resource_id: str, duration: datetime.timedelta, token: str = None):
@@ -80,7 +82,10 @@ class Sheet():
             'value_input_option': VALUE_INPUT_OPTION,
             'data': data
         }
-        self.service.spreadsheets().values().batchUpdate(spreadsheetId=self.spreadsheet_id, body=batch_body).execute()
+        batch_json = json.dumps(batch_body)
+        if self.last_batch_json is None or self.last_batch_json != batch_json:
+            self.service.spreadsheets().values().batchUpdate(spreadsheetId=self.spreadsheet_id, body=batch_body).execute()
+            self.last_batch_json = batch_json
 
 def column_number_to_id(n: int) -> str:
     '''Converts a one-indexed spreadsheet column number to column letter. Adapted from https://stackoverflow.com/a/48984697/2585333'''
