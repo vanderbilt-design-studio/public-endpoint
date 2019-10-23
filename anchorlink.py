@@ -60,7 +60,8 @@ class Attendance():
                 opts.add_argument('--headless')
                 opts.add_argument('--disable-gpu')
                 opts.add_argument('--no-sandbox')
-            self.driver = webdriver.Chrome(options=opts)
+                opts.add_argument('--disable-dev-shm-usage')
+            self.driver = webdriver.Chrome(options=opts, service_args=['--verbose', '--log-path=/tmp/qc1.log'])
             # No implicit waiting -- all waits must be EXPLICIT
             self.driver.implicitly_wait(0)
 
