@@ -60,7 +60,7 @@ class Attendance():
                 opts.add_argument('--headless')
                 opts.add_argument('--disable-gpu')
                 opts.add_argument('--no-sandbox')
-            self.driver = webdriver.Chrome(options=opts)
+            self.driver = webdriver.Chrome(options=opts, executable_path='/app/.apt/usr/lib/chromium-browser/chromium-browser')
             # No implicit waiting -- all waits must be EXPLICIT
             self.driver.implicitly_wait(0)
 
