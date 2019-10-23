@@ -4,6 +4,7 @@ import csv
 from collections import namedtuple
 import warnings
 import time
+import shutil
 
 import requests
 from selenium import webdriver
@@ -61,6 +62,7 @@ class Attendance():
                 opts.add_argument('--disable-gpu')
                 opts.add_argument('--no-sandbox')
                 opts.add_argument('--disable-dev-shm-usage')
+                opts.binary_location = shutil.which('chromium-browser').replace('/bin/', '/lib/chromium-browser/', 1)
             self.driver = webdriver.Chrome(options=opts, service_args=['--verbose', '--log-path=/tmp/qc1.log'])
             # No implicit waiting -- all waits must be EXPLICIT
             self.driver.implicitly_wait(0)
