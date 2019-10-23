@@ -60,6 +60,7 @@ class Attendance():
                 opts.add_argument('--headless')
                 opts.add_argument('--disable-gpu')
                 opts.add_argument('--no-sandbox')
+                opts.add_argument('--window-size=640,480')
             self.driver = webdriver.Chrome(options=opts)
             # No implicit waiting -- all waits must be EXPLICIT
             self.driver.implicitly_wait(0)
