@@ -63,7 +63,7 @@ class Attendance():
                 opts.add_argument('--no-sandbox')
                 opts.add_argument('--disable-dev-shm-usage')
                 opts.binary_location = shutil.which('chromium-browser').replace('/bin/', '/lib/chromium-browser/', 1)
-            self.driver = webdriver.Chrome(options=opts, service_args=['--verbose', '--log-path=/tmp/qc1.log'])
+            self.driver = webdriver.Chrome(options=opts)
             # No implicit waiting -- all waits must be EXPLICIT
             self.driver.implicitly_wait(0)
 
