@@ -1,7 +1,6 @@
 from typing import List, Dict, Tuple, Set, NamedTuple
 import os
 import csv
-from collections import namedtuple
 import warnings
 import time
 import shutil
@@ -12,9 +11,15 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-Credentials = namedtuple('Credentials', ['username', 'password'])
-# https://anchorlink.vanderbilt.edu/actioncenter/organization/ORGANIZATION/events/calendar/details/ID
-Event = namedtuple('Event', ['organization', 'id'])
+class Credentials(NamedTuple):
+    '''Vanderbilt login pair'''
+    username: str
+    password: str
+
+class Event(NamedTuple):
+    '''https://anchorlink.vanderbilt.edu/actioncenter/organization/ORGANIZATION/events/calendar/details/ID'''
+    organization: str
+    id: str
 
 PING_USERNAME_LOCATOR = (By.CSS_SELECTOR, '[name="pf.username"]')
 PING_PASSWORD_LOCATOR = (By.CSS_SELECTOR, '[name="pf.pass"]')
@@ -38,9 +43,21 @@ EXPORT_COMPLETE_LOCATOR = (By.CSS_SELECTOR, 'div#flash')
 MOST_RECENT_DOWNLOAD_BUTTON_LOCATOR = (By.CSS_SELECTOR, 'table > tbody > tr:first-child > td:last-child > a:first-child')
 
 ATTENDANCE_REPORT_SKIP_N_FIRST_LINES = 6
-# From the 5th row of the exported report
-ATTENDANCE_REPORT_FIELD_NAMES = 'First Name,Last Name,Campus Email,Preferred Email,Attendance Status,Marked By,Marked On,Comments,Card ID Number'
-ReportLine = namedtuple('ReportLine', ATTENDANCE_REPORT_FIELD_NAMES.replace(' ', '_').split(','))
+
+class ReportLine(NamedTuple):
+    '''From the 5th row of the exported report'''
+    First_Name: str
+    Last_Name: str
+    Campus_Email: str
+    Preferred_Email: str
+    Attendance_Status: str
+    Marked_By: str
+    Marked_On: str
+    Comments: str
+    Card_ID_Number: str
+
+
+ATTENDANCE_REPORT_FIELD_NAMES = ','.join(list(ReportLine.__annotations__.keys())).replace('_', ' ')
 
 WAIT_TIME: int = 5
 
@@ -198,5 +215,6 @@ class Attendance():
 
 if __name__ == '__main__':
     attendance = Attendance(Credentials('puris', os.environ['VANDERBILT_PASSWORD']), Event('designstudio', '5048888'), debug=True)
+    # These are not real card numbers
     print(attendance.upload(['796000210', '796000210', '796000210']))
     print(attendance.download())

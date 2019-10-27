@@ -1,7 +1,6 @@
 import os
 import csv
-from collections import namedtuple
-from typing import List, Set, OrderedDict, Dict
+from typing import List, Set, Dict, NamedTuple
 import datetime
 import pprint
 import calendar
@@ -10,9 +9,13 @@ import re
 
 import requests
 
-Shift = namedtuple('Shift', ['name', 'day_of_week', 'start', 'duration'])
+class Shift(NamedTuple):
+    name: str
+    day_of_week: str
+    start: datetime.datetime
+    duration: datetime.timedelta
 
-SHIFTS_CSV_EXPORT_URL = os.environ.get('SHIFTS_CSV_EXPORT_URL', '')
+SHIFTS_CSV_EXPORT_URL = os.environ['SHIFTS_CSV_EXPORT_URL']
 
 CST: datetime.timezone = datetime.timezone(datetime.timedelta(hours=-5))
 TIME_OF_DAY_FORMAT: str = '%I:%M:%S %p'
@@ -34,11 +37,15 @@ def get_mentors_on_duty() -> List[str]:
 
     return list(map(get_name, filter(is_mentor_on_duty, get_shifts())))
 
-Day = namedtuple('Day', ['day_of_week', 'hours'])
+class Day(NamedTuple):
+    day_of_week: str
+    hours: List[str]
 
 # Linux-only space-padding from POSIX standard https://stackoverflow.com/questions/10807164/python-time-formatting-different-in-windows
 TIME_RANGE_FORMAT: str = '%_I:%M %p'
-class TimeRange(namedtuple('Hours', ['start', 'duration'])):
+class TimeRange(NamedTuple):
+    start: datetime.datetime
+    duration: datetime.timedelta
     def format_time_of_day(self, dt: datetime.datetime) -> str:
         # Specialize for on-the-hour cases
         if dt.minute == 0:
@@ -134,7 +141,7 @@ def parse_shift(shift: Shift) -> Shift:
     """
     Parses date and time-related fields to the python types
     """
-    shift_dict: OrderedDict[str, str] = shift._asdict()
+    shift_dict: Dict[str, str] = shift._asdict()
     try:
         if type(shift.duration) is str:
             shift_dict['duration'] = parse_duration_str(shift.duration)
