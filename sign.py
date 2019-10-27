@@ -1,5 +1,6 @@
 from typing import List, Dict
 from enum import Enum, auto
+import warnings
 
 from mentors import Shift, get_mentors_on_duty
 
@@ -18,15 +19,18 @@ def is_open(poller_json: Dict, mentors_on_duty: List[Shift]) -> OpenType:
         return OpenType.OPEN if len(mentors_on_duty) > 0 else OpenType.CLOSED
 
     # Never open when the door is not open
-    if poller_json['sign']['door'] == 1:
+    if poller_json['sign']['door']:
         return OpenType.CLOSED
 
+    if poller_json['sign']['switch']['one_on'] and poller_json['sign']['switch']['two_on']:
+        warnings.warn('Switch reports that it is both open and forced open, there may be something wrong.', RuntimeWarning)
+
     # Normal open (follow shift schedule)
-    if poller_json['sign']['switch']['one_on'] == 1:
+    if poller_json['sign']['switch']['one_on']:
         return OpenType.OPEN if len(mentors_on_duty) > 0 else OpenType.CLOSED
 
     # Force open
-    if poller_json['sign']['switch']['two_on'] == 1:
+    if poller_json['sign']['switch']['two_on']:
         return OpenType.FORCE_OPEN
 
     # Force closed
