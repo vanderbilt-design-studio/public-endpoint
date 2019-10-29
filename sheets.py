@@ -122,7 +122,7 @@ class Sheet():
         }
 
         batch_json = json.dumps(batch_body)
-        if False and (self.last_batch_json is None or self.last_batch_json != batch_json):
+        if self.last_batch_json is None or self.last_batch_json != batch_json:
             logging.info('Posting updated cell values')
             self.service.spreadsheets().values().batchUpdate(spreadsheetId=self.spreadsheet_id, body=batch_body).execute()
             self.last_batch_json = batch_json
