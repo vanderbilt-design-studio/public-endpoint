@@ -99,10 +99,9 @@ class Sheet():
         logging.info('Getting original column values')
         column_name_to_original_values: Dict[str, List[str]] = {}
         for column_id, column_name in filtered_column_names:
-            values = self.get_column_values(column_id)
-            if len(values) < len(report_rows): # Fill with empty values if not as long as report_rows
-                values += [''] * (len(report_rows) - len(values))
-            column_name_to_original_values[column_name] = values
+            values = self.get_column_values(column_id)[:len(report_rows)]
+            # Fill with empty values if not as long as report_rows
+            values += [''] * (len(report_rows) - len(values))
 
         data = []
         for column_id, column_name in filtered_column_names:
