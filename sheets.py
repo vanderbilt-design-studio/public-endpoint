@@ -102,6 +102,7 @@ class Sheet():
             values = self.get_column_values(column_id)[:len(report_rows)]
             # Fill with empty values if not as long as report_rows
             values += [''] * (len(report_rows) - len(values))
+            column_name_to_original_values[column_name] = values
 
         data = []
         for column_id, column_name in filtered_column_names:
@@ -113,7 +114,7 @@ class Sheet():
             data.append({
                 "range": f'{column_id}2:{column_id}{len(report_rows)+1}',
                 "majorDimension": "COLUMNS",
-                "values": values
+                "values": [values] # Expects 2D array
             })
         batch_body = {
             'value_input_option': VALUE_INPUT_OPTION,
@@ -144,6 +145,7 @@ def column_number_to_id(n: int) -> str:
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     attendance = Attendance(Credentials('puris', os.environ['PASS']), Event('designstudio', '5048888'))
+    attendance.download()
     printee_sheet = Sheet(service_account.Credentials.from_service_account_file('credentials.json'), 'https://docs.google.com/spreadsheets/d/1tHCdRLZk4owYvN20t5A41__YDU-kBjw2Rw2E9y9SXhI/edit#gid=886233104', 'B', 'Printee_')
     printee_sheet.update(attendance)
     mentor_sheet = Sheet(service_account.Credentials.from_service_account_file('credentials.json'), 'https://docs.google.com/spreadsheets/d/1tHCdRLZk4owYvN20t5A41__YDU-kBjw2Rw2E9y9SXhI/edit#gid=886233104', 'F', 'Mentor_')
