@@ -10,6 +10,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 
 class Credentials(NamedTuple):
     '''Vanderbilt login pair'''
@@ -79,7 +80,13 @@ class Attendance():
                 opts.add_argument('--disable-gpu')
                 opts.add_argument('--no-sandbox')
                 opts.add_argument('--disable-dev-shm-usage')
-                opts.binary_location = shutil.which('chromium-browser').replace('/bin/', '/lib/chromium-browser/', 1)
+                binary_names = ['chromium-browser', 'chromium']
+                for name in binary_names:
+                    binary_location = shutil.which(name)
+                    if binary_location is None:
+                        continue
+                    self.binary_location = binary_location.replace('/bin/', f'/lib/{name}/', 1)
+                    break
             self.driver = webdriver.Chrome(options=opts)
             # No implicit waiting -- all waits must be EXPLICIT
             self.driver.implicitly_wait(0)
@@ -104,12 +111,17 @@ class Attendance():
         self.driver.get("https://anchorlink.vanderbilt.edu/account/login?returnUrl=/")
         WebDriverWait(self.driver, WAIT_TIME).until(EC.visibility_of_element_located(PING_USERNAME_LOCATOR))
         self.driver.find_element(*PING_USERNAME_LOCATOR).send_keys(self.credentials.username)
+        WebDriverWait(self.driver, WAIT_TIME).until(EC.visibility_of_element_located(PING_PASSWORD_LOCATOR))
         self.driver.find_element(*PING_PASSWORD_LOCATOR).send_keys(self.credentials.password)
+        WebDriverWait(self.driver, WAIT_TIME).until(EC.visibility_of_element_located(PING_SIGN_ON_LOCATOR))
         self.driver.find_element(*PING_SIGN_ON_LOCATOR).click()
-
-        WebDriverWait(self.driver, WAIT_TIME).until(EC.visibility_of_element_located(LOGIN_EVENT_LOCATOR))
-        if len(self.driver.find_elements(*PING_ERROR_LOCATOR)) > 0:
-            raise PermissionError(f'Could not log in: "{self.driver.find_element(*PING_ERROR_LOCATOR).text}"')
+        try:
+            WebDriverWait(self.driver, WAIT_TIME).until(EC.visibility_of_element_located(LOGIN_EVENT_LOCATOR))
+        except TimeoutException:
+            warnings.warn('Could not locate login event occurrence, maybe Anchorlink or Ping changed some elements?', RuntimeWarning)
+        finally:
+            if len(self.driver.find_elements(*PING_ERROR_LOCATOR)) > 0:
+                raise PermissionError(f'Could not log in: "{self.driver.find_element(*PING_ERROR_LOCATOR).text}"')
         self.logged_in = True
 
 
