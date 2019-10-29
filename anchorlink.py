@@ -85,7 +85,7 @@ class Attendance():
                     binary_location = shutil.which(name)
                     if binary_location is None:
                         continue
-                    self.binary_location = binary_location.replace('/bin/', f'/lib/{name}/', 1)
+                    opts.binary_location = binary_location.replace('/bin/', f'/lib/{name}/', 1)
                     break
             self.driver = webdriver.Chrome(options=opts)
             # No implicit waiting -- all waits must be EXPLICIT
