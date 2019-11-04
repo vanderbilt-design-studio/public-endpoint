@@ -8,6 +8,7 @@ import logging
 import re
 
 import requests
+import pytz
 
 class Shift(NamedTuple):
     name: str
@@ -17,7 +18,7 @@ class Shift(NamedTuple):
 
 SHIFTS_CSV_EXPORT_URL = os.environ['SHIFTS_CSV_EXPORT_URL']
 
-CST: datetime.timezone = datetime.timezone(datetime.timedelta(hours=-5))
+CST: datetime.timezone = pytz.timezone('US/Central')
 TIME_OF_DAY_FORMAT: str = '%I:%M:%S %p'
 DURATION_REGEX = re.compile(r'(?P<hours>\d+):(?P<minutes>\d+):(?P<seconds>\d+)')
 
