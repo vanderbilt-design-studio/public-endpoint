@@ -95,7 +95,8 @@ class Attendance():
 
     def __del__(self):
         # Quit doesn't work in __del__ for Chrome
-        self.driver.close()
+        if self.driver is not None:
+            self.driver.close()
 
     def is_login_valid(self) -> bool:
         if not self.logged_in:
