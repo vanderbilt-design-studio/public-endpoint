@@ -88,7 +88,7 @@ class Attendance():
                         continue
                     opts.binary_location = binary_location
                     break
-            self.driver = webdriver.Chrome(options=opts)
+            self.driver = webdriver.Chrome(executable_path='/app/.chromedriver/bin/chromedriver', options=opts)
             # No implicit waiting -- all waits must be EXPLICIT
             self.driver.implicitly_wait(0)
 
