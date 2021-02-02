@@ -73,7 +73,7 @@ def get_hours() -> List[Day]:
     2. repeat 1. until no shifts remain
     """
 
-    shifts: Set[Shift] = get_shifts().copy()
+    shifts: Set[Shift] = set(filter(lambda shift: shift.duration != datetime.timedelta(), get_shifts()))
 
     time_ranges: List[TimeRange] = []
     if len(shifts) > 0:
