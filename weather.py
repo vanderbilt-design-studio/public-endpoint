@@ -4,6 +4,7 @@ import os
 import logging
 import warnings
 from metar import Metar
+import defusedxml.ElementTree as ET
 
 # KBNA = Nashville International Airport
 # KJWN = John C Tune Airport (closer to Vandy than BNA)
@@ -19,8 +20,15 @@ def get_weather() -> str:
     if weather is not None and weather_last is not None and (datetime.datetime.now() - weather_last) < datetime.timedelta(seconds=60):
         return weather
     try:
-        res = requests.get(f'https://w1.weather.gov/data/METAR/{WEATHER_STATION}.1.txt')
-        observation: Metar.Metar = Metar.Metar(res.text, strict=False)
+        res = requests.get(f'https://www.aviationweather.gov/adds/dataserver_current/httpparam?datasource=metars&requesttype=retrieve&format=xml&hoursBeforeNow=1.25&mostRecentForEachStation=constraint&stationString={WEATHER_STATION}')
+        xml = ET.fromstring(res.text)
+        raw_observation_element = xml.find('data/METAR/raw_text')
+        if raw_observation_element is None:
+            weather = ''
+            warnings.warn(f'XML returned by aviationweather.gov did not contain the expected path to METAR: {res.text}')
+            return weather
+
+        observation: Metar.Metar = Metar.Metar(raw_observation_element.text, strict=False)
         temperature = observation.temp.value()
 
         if observation.temp._units == 'K':
