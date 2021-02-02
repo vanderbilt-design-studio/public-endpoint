@@ -81,12 +81,12 @@ class Attendance():
                 opts.add_argument('--no-sandbox')
                 opts.add_argument('--disable-dev-shm-usage')
                 opts.add_argument('--single-process')
-                binary_names = ['chromium-browser', 'chromium']
+                binary_names = ['google-chrome', 'chromium-browser', 'chromium']
                 for name in binary_names:
                     binary_location = shutil.which(name)
                     if binary_location is None:
                         continue
-                    opts.binary_location = binary_location.replace('/bin/', f'/lib/{name}/', 1)
+                    opts.binary_location = binary_location
                     break
             self.driver = webdriver.Chrome(options=opts)
             # No implicit waiting -- all waits must be EXPLICIT
