@@ -3,8 +3,11 @@ import requests
 import os
 import logging
 import warnings
+from metar import Metar
 
-WEATHERSTEM_API_KEY = os.environ.get('WEATHERSTEM_API_KEY','')
+# KBNA = Nashville International Airport
+# KJWN = John C Tune Airport (closer to Vandy than BNA)
+WEATHER_STATION = 'KJWN'
 
 weather: str = None
 weather_last: datetime.datetime = None
@@ -16,22 +19,26 @@ def get_weather() -> str:
     if weather is not None and weather_last is not None and (datetime.datetime.now() - weather_last) < datetime.timedelta(seconds=60):
         return weather
     try:
-        res = requests.post('https://api.weatherstem.com/api', json={'api_key':WEATHERSTEM_API_KEY, 'stations':['vanderbilt@davidson.weatherstem.com'], 'sensors':['Thermometer']}).json()
-        if type(res) == dict and 'error' in res:
-            raise PermissionError(res['error'])
-        if len(res) > 0 and 'record' in res[0] and 'readings' in res[0]['record']:
-            for reading in res[0]['record']['readings']:
-                if 'sensor_type' in reading and reading['sensor_type'] == 'Thermometer' and 'value' in reading:
-                    temperature = float(reading['value'])
-                    weather = '{} °F'.format(temperature)
-                    # Unreasonably weird temperatures
-                    # https://en.wikipedia.org/wiki/Lowest_temperature_recorded_on_Earth
-                    # https://en.wikipedia.org/wiki/Highest_temperature_recorded_on_Earth (ground temperature)
-                    if temperature > 201.0 or temperature < -128.6:
-                        warnings.warn(f'Unreasonably weird temperature received: {weather}')
-                        weather = ''
-    except (requests.RequestException, ValueError) as e:
-        logging.error(f'Exception while getting weather: {e}')
+        res = requests.get(f'https://w1.weather.gov/data/METAR/{WEATHER_STATION}.1.txt')
+        observation: Metar.Metar = Metar.Metar(res.text, strict=False)
+        temperature = observation.temp.value()
+
+        if observation.temp._units == 'K':
+            temperature = temperature + 273.15
+        if observation.temp._units in ['C', 'K']:
+            temperature = temperature * 1.8 + 32
+        weather = f'{temperature} °F'
+        # Unreasonably weird temperatures
+        # https://en.wikipedia.org/wiki/Lowest_temperature_recorded_on_Earth
+        # https://en.wikipedia.org/wiki/Highest_temperature_recorded_on_Earth (ground temperature)
+        if temperature > 201.0 or temperature < -128.6:
+            warnings.warn(f'Unreasonably weird temperature received: {weather}')
+            weather = ''
+    except Metar.ParserError as e:
+        logging.error(f'Exception while parsing weather METAR: {e}')
+        weather = ''
+    except requests.RequestException as e:
+        logging.error(f'Exception while getting weather from NWS: {e}')
         weather = ''
     finally:
         weather_last = datetime.datetime.now()
