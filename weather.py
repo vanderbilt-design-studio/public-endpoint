@@ -16,7 +16,7 @@ def get_weather() -> str:
     if weather is not None and weather_last is not None and (datetime.datetime.now() - weather_last) < datetime.timedelta(seconds=60):
         return weather
     try:
-        res = requests.post('https://davidson.weatherstem.com/api', json={'api_key':WEATHERSTEM_API_KEY, 'stations':['vanderbilt'], 'sensors':['Thermometer']}).json()
+        res = requests.post('https://api.weatherstem.com/api', json={'api_key':WEATHERSTEM_API_KEY, 'stations':['vanderbilt@davidson.weatherstem.com'], 'sensors':['Thermometer']}).json()
         if type(res) == dict and 'error' in res:
             raise PermissionError(res['error'])
         if len(res) > 0 and 'record' in res[0] and 'readings' in res[0]['record']:
