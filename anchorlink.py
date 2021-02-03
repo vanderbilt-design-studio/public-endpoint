@@ -22,10 +22,11 @@ class Event(NamedTuple):
     organization: str
     id: str
 
-PING_USERNAME_LOCATOR = (By.CSS_SELECTOR, '[name="pf.username"]')
+PING_USERNAME_LOCATOR = (By.CSS_SELECTOR, 'input#identifierInput')
 PING_PASSWORD_LOCATOR = (By.CSS_SELECTOR, '[name="pf.pass"]')
 PING_SIGN_ON_LOCATOR = (By.CSS_SELECTOR, 'a.ping-button')
 PING_ERROR_LOCATOR = (By.CSS_SELECTOR, '.ping-error')
+PING_NEXT_LOCATOR = PING_SIGN_ON_LOCATOR # same ping button
 
 ANCHORLINK_LOCATOR = (By.CSS_SELECTOR, '[role="main"]')
 
@@ -88,7 +89,9 @@ class Attendance():
                         continue
                     opts.binary_location = binary_location
                     break
-            self.driver = webdriver.Chrome(executable_path='/app/.chromedriver/bin/chromedriver', options=opts)
+                self.driver = webdriver.Chrome(executable_path='/app/.chromedriver/bin/chromedriver', options=opts)
+            else:
+                self.driver = webdriver.Firefox()
             # No implicit waiting -- all waits must be EXPLICIT
             self.driver.implicitly_wait(0)
 
@@ -113,6 +116,7 @@ class Attendance():
         self.driver.get("https://anchorlink.vanderbilt.edu/account/login?returnUrl=/")
         WebDriverWait(self.driver, WAIT_TIME).until(EC.visibility_of_element_located(PING_USERNAME_LOCATOR))
         self.driver.find_element(*PING_USERNAME_LOCATOR).send_keys(self.credentials.username)
+        self.driver.find_element(*PING_NEXT_LOCATOR).click()
         WebDriverWait(self.driver, WAIT_TIME).until(EC.visibility_of_element_located(PING_PASSWORD_LOCATOR))
         self.driver.find_element(*PING_PASSWORD_LOCATOR).send_keys(self.credentials.password)
         WebDriverWait(self.driver, WAIT_TIME).until(EC.visibility_of_element_located(PING_SIGN_ON_LOCATOR))
