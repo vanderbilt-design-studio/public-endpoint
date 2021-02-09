@@ -108,7 +108,7 @@ def get_hours() -> List[Day]:
 
     def get_hours_for_day_of_week(dow: int) -> List[str]:
         """Finds time-ranges for this day of the week, sorts, and converts them to strings"""
-        return list(map(str, sorted(filter(lambda time_range: time_range.start.weekday() == dow, time_ranges))))
+        return list(map(str, sorted(filter(lambda time_range: time_range.start.weekday() == dow, time_ranges), key=lambda time_range: time_range.start)))
 
     cal: calendar.Calendar = calendar.Calendar(firstweekday=calendar.MONDAY)
     return [Day(calendar.day_name[dow], get_hours_for_day_of_week(dow)) for dow in cal.iterweekdays()]
