@@ -35,6 +35,7 @@ def get_weather() -> str:
             temperature = temperature + 273.15
         if observation.temp._units in ['C', 'K']:
             temperature = temperature * 1.8 + 32
+        temperature = round(temperature, 1)
         weather = f'{temperature} °F'
         # Unreasonably weird temperatures
         # https://en.wikipedia.org/wiki/Lowest_temperature_recorded_on_Earth
